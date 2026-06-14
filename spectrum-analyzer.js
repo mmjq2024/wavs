@@ -176,6 +176,7 @@
 
   const audio = document.createElement('audio');
   audio.controls = true;
+  audio.crossOrigin = 'anonymous'; // required for Web Audio API to analyse URL-based sources
   audio.style.cssText = 'flex:1;height:24px';
 
   row.appendChild(songSelect);
@@ -383,7 +384,7 @@
     init();
     if (audioCtx.state === 'suspended') audioCtx.resume();
     audio.src = song.url;
-    audio.play();
+    audio.play().catch(function (err) { console.error('Playback failed:', err); });
   });
 
   styleSelect.addEventListener('change', function () {
