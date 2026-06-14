@@ -72,7 +72,7 @@
   // wherever you host the audio files (relative or absolute paths both work).
 
   const SONGS = [
-    { title: 'The Scientist',        artist: 'Coldplay',        url: 'audio/04 The Scientist.mp3' },
+    { title: 'The Scientist',        artist: 'Coldplay',        url: 'audio/The Scientist - Coldplay.mp3' },
     { title: 'Show Me',              artist: 'Mint Royale',     url: 'audio/Show Me - Mint Royale.mp3' },
     { title: 'No Diggity (lofi)',    artist: 'Joongle',         url: 'audio/No Diggity lofi cover - Joongle.mp3' },
     { title: 'Baby Love Child',      artist: 'Pizzicato Five',  url: 'audio/Baby Love Child - Pizzicato Five.mp3' },
@@ -354,8 +354,8 @@
     if (audioCtx) return;
     audioCtx = new (window.AudioContext || window.webkitAudioContext)();
     analyser = audioCtx.createAnalyser();
-    analyser.fftSize = 32768; // max size — gives 16384 bins for fine low-freq resolution
-    analyser.smoothingTimeConstant = 0.8; // temporal smoothing between frames (0–1)
+    analyser.fftSize = 2048; // smaller window = ~46ms lag vs ~743ms at 32768; freq resolution is fine because we use a 20Hz–20kHz log mapping
+    analyser.smoothingTimeConstant = 0.7; // temporal smoothing between frames (0–1)
     source = audioCtx.createMediaElementSource(audio);
     source.connect(analyser);
     analyser.connect(audioCtx.destination);
