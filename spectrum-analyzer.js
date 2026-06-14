@@ -66,6 +66,24 @@
   });
 
   // ---------------------------------------------------------------------------
+  // Song list
+  // ---------------------------------------------------------------------------
+  // Pre-defined tracks served from the site. Update the url values to match
+  // wherever you host the audio files (relative or absolute paths both work).
+
+  const SONGS = [
+    { title: 'The Scientist',        artist: 'Coldplay',        url: 'audio/04 The Scientist.mp3' },
+    { title: 'Show Me',              artist: 'Mint Royale',     url: 'audio/Show Me - Mint Royale.mp3' },
+    { title: 'No Diggity (lofi)',    artist: 'Joongle',         url: 'audio/No Diggity lofi cover - Joongle.mp3' },
+    { title: 'Baby Love Child',      artist: 'Pizzicato Five',  url: 'audio/Baby Love Child - Pizzicato Five.mp3' },
+    { title: "L'Amour Toujours",     artist: "Gigi D'Agostino", url: "audio/Ill Fly Away With You (L' Amour Toujours) - Gigi D'Agostino.mp3" },
+    { title: 'Time After Time',      artist: 'INOJ',            url: 'audio/Time After Time - INOJ.mp3' },
+    { title: 'Starry Eyed Surprise', artist: 'Paul Oakenfold',  url: 'audio/Starry Eyed Surprise - Paul Oakenfold.mp3' },
+    { title: 'The Freshmen',         artist: 'Verve Pipe',      url: 'audio/The Freshmen - Verve Pipe.mp3' },
+    { title: 'Children',             artist: 'Robert Miles',    url: 'audio/Children - Robert Miles.mp3' },
+  ];
+
+  // ---------------------------------------------------------------------------
   // State
   // ---------------------------------------------------------------------------
 
@@ -118,14 +136,34 @@
   canvas.style.alignSelf = 'center';
   wrap.appendChild(canvas);
 
-  // Controls row: file picker | style selector | audio player
+  // Controls row: song selector | browse toggle | [file picker] | style selector | audio player
+  // The file picker is hidden by default; browseBtn toggles between the two input modes.
   const row = document.createElement('div');
   row.style.cssText = 'display:flex;gap:8px;align-items:center;width:100%';
+
+  const songSelect = document.createElement('select');
+  songSelect.style.cssText = 'flex:1;background:#111;color:#00cc00;border:1px solid #333;font-size:11px;padding:2px 4px;cursor:pointer';
+  const placeholderOpt = document.createElement('option');
+  placeholderOpt.value = '';
+  placeholderOpt.textContent = '— select a song —';
+  placeholderOpt.disabled = true;
+  placeholderOpt.selected = true;
+  songSelect.appendChild(placeholderOpt);
+  SONGS.forEach(function (song, i) {
+    const opt = document.createElement('option');
+    opt.value = i;
+    opt.textContent = song.title + ' — ' + song.artist;
+    songSelect.appendChild(opt);
+  });
+
+  const browseBtn = document.createElement('button');
+  browseBtn.textContent = 'Browse';
+  browseBtn.style.cssText = 'background:#111;color:#00cc00;border:1px solid #333;font-size:11px;padding:2px 6px;cursor:pointer;white-space:nowrap';
 
   const picker = document.createElement('input');
   picker.type = 'file';
   picker.accept = 'audio/*';
-  picker.style.cssText = 'flex:1;color:#00cc00;font-size:11px;background:transparent;border:none;cursor:pointer';
+  picker.style.cssText = 'flex:1;color:#00cc00;font-size:11px;background:transparent;border:none;cursor:pointer;display:none';
 
   const styleSelect = document.createElement('select');
   styleSelect.style.cssText = 'background:#111;color:#00cc00;border:1px solid #333;font-size:11px;padding:2px 4px;cursor:pointer';
@@ -140,6 +178,8 @@
   audio.controls = true;
   audio.style.cssText = 'flex:1;height:24px';
 
+  row.appendChild(songSelect);
+  row.appendChild(browseBtn);
   row.appendChild(picker);
   row.appendChild(styleSelect);
   row.appendChild(audio);
@@ -327,6 +367,23 @@
 
   blendSlider.addEventListener('input', function () {
     gradientBlend = parseFloat(blendSlider.value);
+  });
+
+  // Toggle between the song list and the local file picker.
+  browseBtn.addEventListener('click', function () {
+    const browsing = picker.style.display === 'none';
+    picker.style.display = browsing ? '' : 'none';
+    songSelect.style.display = browsing ? 'none' : '';
+    browseBtn.textContent = browsing ? 'Songs' : 'Browse';
+  });
+
+  songSelect.addEventListener('change', function () {
+    const song = SONGS[parseInt(songSelect.value, 10)];
+    if (!song) return;
+    init();
+    if (audioCtx.state === 'suspended') audioCtx.resume();
+    audio.src = song.url;
+    audio.play();
   });
 
   styleSelect.addEventListener('change', function () {
