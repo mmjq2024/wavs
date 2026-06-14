@@ -8,11 +8,9 @@
   // Constants
   // ---------------------------------------------------------------------------
 
-  // Canvas dimensions. W is derived from the Classic style's bar geometry so
-  // the 75 bars fill it exactly; all other styles auto-fit their bar count to W.
-  const BAR_W = 3;
-  const BAR_GAP = 1;
-  const W = 75 * (BAR_W + BAR_GAP) - BAR_GAP;
+  // Canvas dimensions. Each style auto-fits its bar count to W based on its
+  // barWidth and barGap, so changing W here is all that's needed to resize.
+  const W = 700;
   const H = 200;
 
   // Peak dot behaviour: dots hold at their highest position for PEAK_HOLD_FRAMES
@@ -107,7 +105,7 @@
   wrap.style.cssText = [
     'display:inline-flex',
     'flex-direction:column',
-    'align-items:center',
+    'align-items:stretch',
     'gap:6px',
     'background:#000',
     'padding:8px',
@@ -117,6 +115,7 @@
   const canvas = document.createElement('canvas');
   canvas.width = W;
   canvas.height = H;
+  canvas.style.alignSelf = 'center';
   wrap.appendChild(canvas);
 
   // Controls row: file picker | style selector | audio player
