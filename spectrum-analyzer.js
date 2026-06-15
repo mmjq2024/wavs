@@ -6,7 +6,7 @@
 // Load order in HTML:
 //   <script src="styles/bars.js"></script>
 //   <script src="styles/waterfall.js"></script>
-//   <!-- <script src="styles/circles.js"></script> -->
+//   <script src="styles/sparkler.js"></script>
 //   <script src="spectrum-analyzer.js"></script>
 (function () {
 
@@ -58,12 +58,9 @@
 
   const wrap = document.createElement('div');
   wrap.style.cssText = [
-    'display:inline-flex',
-    'flex-direction:column',
-    'align-items:stretch',
-    'gap:6px',
+    'width:700px',
     'background:#000',
-    'margin: 80px auto 20px auto'
+    'margin: 20px auto 20px auto',
     'padding:8px',
     'border:1px solid #222',
   ].join(';');
