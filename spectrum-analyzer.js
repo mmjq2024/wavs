@@ -5,6 +5,7 @@
 //
 // Load order in HTML:
 //   <script src="styles/bars.js"></script>
+//   <script src="styles/waterfall.js"></script>
 //   <!-- <script src="styles/circles.js"></script> -->
 //   <script src="spectrum-analyzer.js"></script>
 (function () {
@@ -62,6 +63,7 @@
     'align-items:stretch',
     'gap:6px',
     'background:#000',
+    'margin: 80px auto 20px auto'
     'padding:8px',
     'border:1px solid #222',
   ].join(';');
@@ -93,6 +95,7 @@
   songSelect.appendChild(placeholderOpt);
   SONGS.forEach(function (song, i) {
     const opt = document.createElement('option');
+    opt.style.cssText = 'background:#111;color:#00cc00';
     opt.value = i;
     opt.textContent = song.title + ' — ' + song.artist;
     songSelect.appendChild(opt);
@@ -113,6 +116,7 @@
     const opt = document.createElement('option');
     opt.value = i;
     opt.textContent = style.name;
+    opt.style.cssText = 'background:#111;color:#00cc00';
     styleSelect.appendChild(opt);
   });
 
