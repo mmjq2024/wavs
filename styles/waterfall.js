@@ -47,18 +47,9 @@
   // ---------------------------------------------------------------------------
 
   (window.SpectrumStyles = window.SpectrumStyles || []).push({
-    name: 'Waterfall',
+    name: 'Night Wake',
 
-    settings: [
-      {
-        id: 'depth',
-        type: 'range',
-        label: 'Depth',
-        min: 0.1, max: 1, step: 0.01, default: 0.7,
-        labelMin: 'Shallow',
-        labelMax: 'Deep',
-      },
-    ],
+    settings: [],
 
     setup: function (ctx, W, H) {
       return {
@@ -77,7 +68,7 @@
 
       const numBars    = resources.numBars;
       const history    = resources.history;
-      const perspDepth = params.depth;
+      const perspDepth = 0.7;
 
       // Sample frequency data, then apply a contrast expansion:
       // signals below the noise floor drop to zero, signals above are stretched

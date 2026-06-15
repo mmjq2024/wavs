@@ -171,7 +171,85 @@
       'Mountain', 2, 0, false,
       [[0, '#ffffff'], [0.2, '#ff88ff'], [0.45, '#4488ff'], [0.7, '#00ffcc'], [1, '#006644']],
       null
+    ),
+    createBarStyle(
+      'Flame', 3, 1, true,
+      [[0, '#7700cc'], [0.25, '#003399'], [0.5, '#66aaff'], [0.75, '#ff6600'], [1, '#ffee00']],
+      '#5a0044'
     )
   );
+
+  // ---------------------------------------------------------------------------
+  // Aurora — animated scrolling gradient, no bar gaps
+  // ---------------------------------------------------------------------------
+  // Two repeats of the colour pattern are baked into a 1×(2H) offscreen canvas.
+  // Each frame we advance a scroll counter and sample a barH-tall strip starting
+  // at `scroll`, giving a slow upward drift of colour through every bar.
+
+  (window.SpectrumStyles = window.SpectrumStyles || []).push({
+    name: 'Aurora',
+
+    settings: [],
+
+    setup: function (ctx, W, H) {
+      const barWidth = 2;
+      const numBars  = Math.floor(W / barWidth);
+
+      // Bake two full pattern repetitions so scroll never overruns the canvas
+      // (scroll < H, barH <= H, so sy + sh = scroll + barH < 2H always).
+      const off    = document.createElement('canvas');
+      off.width    = 1;
+      off.height   = H * 2;
+      const offCtx = off.getContext('2d');
+      const g      = offCtx.createLinearGradient(0, 0, 0, H * 2);
+      g.addColorStop(0,     '#000000');
+      g.addColorStop(0.125, '#99ff99');  // light green
+      g.addColorStop(0.25,  '#000000');
+      g.addColorStop(0.375, '#004400');  // dark green
+      g.addColorStop(0.5,   '#000000');
+      g.addColorStop(0.625, '#99ff99');
+      g.addColorStop(0.75,  '#000000');
+      g.addColorStop(0.875, '#004400');
+      g.addColorStop(1.0,   '#000000');
+      offCtx.fillStyle = g;
+      offCtx.fillRect(0, 0, 1, H * 2);
+
+      return { numBars: numBars, bins: null, offscreen: off, barWidth: barWidth, time: 0,
+               smoothed: new Float32Array(numBars) };
+    },
+
+    initBins: function (resources, bufLen, sampleRate) {
+      resources.bins = computeBins(resources.numBars, bufLen, sampleRate);
+    },
+
+    render: function (ctx, W, H, buf, resources, params) {
+      if (!resources.bins) return;
+      const { numBars, bins, offscreen, barWidth } = resources;
+
+      // Advance scroll ~0.1 px/frame → one full colour cycle every ~33 s at 60 fps.
+      resources.time++;
+      const scroll = Math.floor(resources.time * 0.1) % H;
+
+      ctx.fillStyle = '#000';
+      ctx.fillRect(0, 0, W, H);
+
+      const smoothed = resources.smoothed;
+      for (let i = 0; i < numBars; i++) {
+        const raw = getBarLevel(bins, i, buf) / 255;
+        // Snap up to new highs immediately; decay slowly so bars linger.
+        smoothed[i] = raw > smoothed[i] ? raw : smoothed[i] * 0.97;
+        const barH = Math.round(smoothed[i] * H);
+        if (barH === 0) continue;
+        // Sample a barH-tall strip from the scrolling gradient and stretch it
+        // horizontally to barWidth, mapping tip→base of bar.
+        ctx.drawImage(offscreen, 0, scroll, 1, H, i * barWidth, 0, barWidth, barH);
+      }
+    },
+
+    reset: function (resources) {
+      resources.time = 0;
+      resources.smoothed.fill(0);
+    },
+  });
 
 })();

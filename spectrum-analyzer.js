@@ -58,11 +58,16 @@
 
   const wrap = document.createElement('div');
   wrap.style.cssText = [
-    'width:700px',
+    'display:flex',
+    'flex-direction:column',
+    'align-items:stretch',
+    'gap:6px',
+    'box-sizing:border-box',
+    'width:716px',
     'background:#000',
-    'margin: 20px auto 20px auto',
     'padding:8px',
     'border:1px solid #222',
+    'margin:20px auto',
   ].join(';');
 
   // ---------------------------------------------------------------------------
