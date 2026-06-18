@@ -14,7 +14,7 @@
   const MIN_FREQ = 20;
   const MAX_FREQ = 20000;
   const NUM_BARS = 128; // frequency resolution; halve for performance, double for detail
-  const HISTORY  = 80;  // frames retained for the waterfall depth
+  const HISTORY  = 50;  // frames retained for the waterfall depth
 
   // ---------------------------------------------------------------------------
   // Shared helpers (same log-scale bin mapping used by bars.js)
@@ -68,7 +68,7 @@
 
       const numBars    = resources.numBars;
       const history    = resources.history;
-      const perspDepth = 0.7;
+      const perspDepth = 0.9;
 
       // Sample frequency data, then apply a contrast expansion:
       // signals below the noise floor drop to zero, signals above are stretched

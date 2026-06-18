@@ -9,12 +9,12 @@
   const MAX_FREQ   = 20000;
   const AMBIENT    = 35;   // dim green all characters always show
   const GLOW_MAX   = 220;  // extra brightness injected at the cascade head
-  const GLOW_DECAY = 0.93; // per-frame trail fade (lower = shorter trail)
+  const GLOW_DECAY = 0.96; // per-frame trail fade (lower = shorter trail)
   const FALL_SPEED = 0.25; // rows/frame the head descends when amplitude drops
 
   // Ambient rain — independent of audio. Occasional drops spawn at the top of
   // a random column and fall at their own pace, just like the classic effect.
-  const AMBIENT_SPAWN_CHANCE = 0.0025; // per column, per frame
+  const AMBIENT_SPAWN_CHANCE = 0.008; // per column, per frame
   const AMBIENT_GLOW         = 170;    // dimmer than a music-driven head
   const AMBIENT_SPEED_MIN    = 0.15;
   const AMBIENT_SPEED_RANGE  = 0.35;

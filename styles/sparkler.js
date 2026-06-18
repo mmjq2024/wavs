@@ -75,16 +75,12 @@
 
     settings: [
       {
-        id: 'peaks',
-        type: 'toggle',
-        label: 'Sparks',
-        default: true,
-      },
-      {
-        id: 'mirror',
-        type: 'toggle',
-        label: 'Mirror',
-        default: false,
+        type: 'group',
+        justify: 'flex-start',
+        settings: [
+          { id: 'peaks',  type: 'toggle', label: 'Sparks', default: true  },
+          { id: 'mirror', type: 'toggle', label: 'Mirror', default: true },
+        ],
       },
     ],
 

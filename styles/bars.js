@@ -43,9 +43,11 @@
   // Bar style factory
   // ---------------------------------------------------------------------------
 
-  // Creates a bar-type style. All three current styles share the same rendering
-  // logic; they differ only in bar geometry, gradient colours, and peak options.
-  function createBarStyle(name, barWidth, barGap, showPeaks, stops, peakColor) {
+  // Creates a bar-type style. All current styles share the same rendering
+  // logic; they differ only in bar geometry, gradient colours, peak options,
+  // and growth direction (hangFromTop flips bars to hang from the ceiling
+  // instead of rising from the floor — same gradient, mirrored anchor).
+  function createBarStyle(name, barWidth, barGap, showPeaks, stops, peakColor, hangFromTop, floatPeaks) {
 
     return {
       name: name,
@@ -81,11 +83,13 @@
         offCtx.fillRect(0, 0, 1, H);
 
         return {
-          numBars: numBars,
-          offscreen: off,
-          bins: null,                          // set by initBins()
-          peaks: new Array(numBars).fill(0),   // current peak height in pixels
-          holdCounters: new Array(numBars).fill(0), // hold frames remaining
+          numBars:      numBars,
+          offscreen:    off,
+          bins:         null,
+          peaks:        new Array(numBars).fill(0),
+          holdCounters: new Array(numBars).fill(0),
+          peakAlphas:   floatPeaks ? new Float32Array(numBars) : null,
+          peakVels:     floatPeaks ? new Float32Array(numBars) : null,
         };
       },
 
@@ -114,6 +118,8 @@
           const barH = Math.round((getBarLevel(bins, i, buf) / 255) * H);
           const x = i * (barWidth + barGap);
 
+          const y = hangFromTop ? 0 : H - barH;
+
           if (barH > 0) {
             // Blend between two gradient sampling modes by interpolating the
             // source rect within the offscreen gradient canvas:
@@ -121,24 +127,46 @@
             //   blend=1 (per-bar):    sample the full gradient stretched to the bar.
             const srcY = (H - barH) * (1 - blend);
             const srcH = barH + (H - barH) * blend;
-            ctx.drawImage(off, 0, srcY, 1, srcH, x, H - barH, barWidth, barH);
+            ctx.drawImage(off, 0, srcY, 1, srcH, x, y, barWidth, barH);
           }
 
           if (showPeaks) {
-            // Peak dots snap to the new high instantly, hold for a fixed number
-            // of frames, then fall at a constant pixel rate.
-            if (barH >= peaks[i]) {
-              peaks[i] = barH;
-              holdCounters[i] = PEAK_HOLD_FRAMES;
-            } else if (holdCounters[i] > 0) {
-              holdCounters[i]--;
+            if (floatPeaks) {
+              // Floating embers: launch upward from the bar tip, fade as they rise.
+              // Relaunch whenever the bar is active and no ember is currently floating.
+              const alphas = resources.peakAlphas;
+              const vels   = resources.peakVels;
+              if (barH > 2 && (alphas[i] <= 0 || barH >= peaks[i])) {
+                peaks[i]  = barH;
+                alphas[i] = 1.0;
+                const speed = 0.4 + Math.random() * 0.5;
+                vels[i]   = Math.random() < 0.7 ? speed : -speed;
+              } else if (alphas[i] > 0) {
+                peaks[i]  += vels[i];
+                alphas[i]   = Math.max(0, alphas[i] - 0.018);
+                if (alphas[i] <= 0 || peaks[i] <= 0) peaks[i] = 0; // reset on fade or floor
+              }
+              if (alphas[i] > 0 && peaks[i] <= H) {
+                ctx.globalAlpha = alphas[i];
+                ctx.fillStyle   = peakColor;
+                ctx.fillRect(x, H - Math.round(peaks[i]), barWidth, 1);
+                ctx.globalAlpha = 1;
+              }
             } else {
-              peaks[i] = Math.max(0, peaks[i] - PEAK_DECAY);
-            }
-
-            if (peaks[i] > 0) {
-              ctx.fillStyle = peakColor;
-              ctx.fillRect(x, H - Math.round(peaks[i]), barWidth, 1);
+              // Classic peaks: snap to high, hold, then fall.
+              if (barH >= peaks[i]) {
+                peaks[i] = barH;
+                holdCounters[i] = PEAK_HOLD_FRAMES;
+              } else if (holdCounters[i] > 0) {
+                holdCounters[i]--;
+              } else {
+                peaks[i] = Math.max(0, peaks[i] - PEAK_DECAY);
+              }
+              if (peaks[i] > 0) {
+                ctx.fillStyle = peakColor;
+                const peakY = hangFromTop ? Math.round(peaks[i]) : H - Math.round(peaks[i]);
+                ctx.fillRect(x, peakY, barWidth, 1);
+              }
             }
           }
         }
@@ -148,6 +176,8 @@
       reset: function (resources) {
         resources.peaks.fill(0);
         resources.holdCounters.fill(0);
+        if (resources.peakAlphas) resources.peakAlphas.fill(0);
+        if (resources.peakVels)   resources.peakVels.fill(0);
       },
     };
   }
@@ -173,83 +203,10 @@
       null
     ),
     createBarStyle(
-      'Flame', 3, 1, true,
-      [[0, '#7700cc'], [0.25, '#003399'], [0.5, '#66aaff'], [0.75, '#ff6600'], [1, '#ffee00']],
-      '#5a0044'
+      'Flame', 3, 0, true,
+      [[0, '#550044'], [0.25, '#003399'], [0.5, '#66aaff'], [0.75, '#ff6600'], [1, '#ffee00']],
+      '#ff4400', false, true
     )
   );
-
-  // ---------------------------------------------------------------------------
-  // Aurora — animated scrolling gradient, no bar gaps
-  // ---------------------------------------------------------------------------
-  // Two repeats of the colour pattern are baked into a 1×(2H) offscreen canvas.
-  // Each frame we advance a scroll counter and sample a barH-tall strip starting
-  // at `scroll`, giving a slow upward drift of colour through every bar.
-
-  (window.SpectrumStyles = window.SpectrumStyles || []).push({
-    name: 'Aurora',
-
-    settings: [],
-
-    setup: function (ctx, W, H) {
-      const barWidth = 2;
-      const numBars  = Math.floor(W / barWidth);
-
-      // Bake two full pattern repetitions so scroll never overruns the canvas
-      // (scroll < H, barH <= H, so sy + sh = scroll + barH < 2H always).
-      const off    = document.createElement('canvas');
-      off.width    = 1;
-      off.height   = H * 2;
-      const offCtx = off.getContext('2d');
-      const g      = offCtx.createLinearGradient(0, 0, 0, H * 2);
-      g.addColorStop(0,     '#000000');
-      g.addColorStop(0.125, '#99ff99');  // light green
-      g.addColorStop(0.25,  '#000000');
-      g.addColorStop(0.375, '#004400');  // dark green
-      g.addColorStop(0.5,   '#000000');
-      g.addColorStop(0.625, '#99ff99');
-      g.addColorStop(0.75,  '#000000');
-      g.addColorStop(0.875, '#004400');
-      g.addColorStop(1.0,   '#000000');
-      offCtx.fillStyle = g;
-      offCtx.fillRect(0, 0, 1, H * 2);
-
-      return { numBars: numBars, bins: null, offscreen: off, barWidth: barWidth, time: 0,
-               smoothed: new Float32Array(numBars) };
-    },
-
-    initBins: function (resources, bufLen, sampleRate) {
-      resources.bins = computeBins(resources.numBars, bufLen, sampleRate);
-    },
-
-    render: function (ctx, W, H, buf, resources, params) {
-      if (!resources.bins) return;
-      const { numBars, bins, offscreen, barWidth } = resources;
-
-      // Advance scroll ~0.1 px/frame → one full colour cycle every ~33 s at 60 fps.
-      resources.time++;
-      const scroll = Math.floor(resources.time * 0.1) % H;
-
-      ctx.fillStyle = '#000';
-      ctx.fillRect(0, 0, W, H);
-
-      const smoothed = resources.smoothed;
-      for (let i = 0; i < numBars; i++) {
-        const raw = getBarLevel(bins, i, buf) / 255;
-        // Snap up to new highs immediately; decay slowly so bars linger.
-        smoothed[i] = raw > smoothed[i] ? raw : smoothed[i] * 0.97;
-        const barH = Math.round(smoothed[i] * H);
-        if (barH === 0) continue;
-        // Sample a barH-tall strip from the scrolling gradient and stretch it
-        // horizontally to barWidth, mapping tip→base of bar.
-        ctx.drawImage(offscreen, 0, scroll, 1, H, i * barWidth, 0, barWidth, barH);
-      }
-    },
-
-    reset: function (resources) {
-      resources.time = 0;
-      resources.smoothed.fill(0);
-    },
-  });
 
 })();

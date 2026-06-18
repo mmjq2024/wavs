@@ -25,15 +25,25 @@
   // wherever you host the audio files (relative or absolute paths both work).
 
   const SONGS = [
-    { title: 'The Scientist',        artist: 'Coldplay',        url: 'audio/The Scientist - Coldplay.mp3' },
-    { title: 'Show Me',              artist: 'Mint Royale',     url: 'audio/Show Me - Mint Royale.mp3' },
-    { title: 'No Diggity (lofi)',    artist: 'Joongle',         url: 'audio/No Diggity lofi cover - Joongle.mp3' },
-    { title: 'Baby Love Child',      artist: 'Pizzicato Five',  url: 'audio/Baby Love Child - Pizzicato Five.mp3' },
-    { title: "L'Amour Toujours",     artist: "Gigi D'Agostino", url: "audio/Ill Fly Away With You (L' Amour Toujours) - Gigi D'Agostino.mp3" },
-    { title: 'Time After Time',      artist: 'INOJ',            url: 'audio/Time After Time - INOJ.mp3' },
-    { title: 'Starry Eyed Surprise', artist: 'Paul Oakenfold',  url: 'audio/Starry Eyed Surprise - Paul Oakenfold.mp3' },
-    { title: 'The Freshmen',         artist: 'Verve Pipe',      url: 'audio/The Freshmen - Verve Pipe.mp3' },
-    { title: 'Children',             artist: 'Robert Miles',    url: 'audio/Children - Robert Miles.mp3' },
+    { title: 'Baby Love Child',      artist: 'Pizzicato Five',       url: '/wavs/audio/Baby Love Child - Pizzicato Five.mp3' },
+    { title: 'No Diggity',           artist: 'Blackstreet',          url: '/wavs/audio/Blackstreet - No Diggity.mp3' },
+    { title: 'Crossroad',            artist: 'Bone Thugs N Harmony', url: '/wavs/audio/Bone Thugs N Harmony - Crossroad.mp3' },
+    { title: 'Children',             artist: 'Robert Miles',         url: '/wavs/audio/Children - Robert Miles.mp3' },
+    { title: 'Between The Bars',     artist: 'Elliott Smith',        url: '/wavs/audio/Elliott Smith - Between The Bars.mp3' },
+    { title: 'Everything',           artist: 'Hooch',                url: '/wavs/audio/Everything - Hooch.mp3' },
+    { title: "L'Amour Toujours",     artist: "Gigi D'Agostino",      url: "/wavs/audio/Ill Fly Away With You (L' Amour Toujours) - Gigi D'Agostino.mp3" },
+    { title: 'One Million Miles Away', artist: 'J Ralph',            url: '/wavs/audio/J Ralph - One Million Miles Away.mp3' },
+    { title: 'Aisha',                artist: 'Khaled',               url: '/wavs/audio/Khaled - Aisha.mp3' },
+    { title: 'Walking in Memphis',   artist: 'Marc Cohn',            url: '/wavs/audio/Marc Cohn - Walking In Memphis.mp3' },
+    { title: 'Baro',                 artist: 'Nil Lara',             url: '/wavs/audio/Nil Lara - Baro.m4a' },
+    { title: 'Paranoid Android',     artist: 'Radiohead',            url: '/wavs/audio/Radiohead - Paranoid Android.mp3' },
+    { title: 'Closing Time',         artist: 'Semisonic',            url: '/wavs/audio/Semisonic - Closing Time.mp3' },
+    { title: 'Show Me',              artist: 'Mint Royale',          url: '/wavs/audio/Show Me - Mint Royale.mp3' },
+    { title: 'Tonight Tonight',      artist: 'Smashing Pumpkins',    url: '/wavs/audio/Smashing Pumpkins - Tonight Tonight.mp3' },
+    { title: 'Main Title',           artist: 'Sneakers',             url: '/wavs/audio/Sneakers - Main Title.flac' },
+    { title: 'Starry Eyed Surprise', artist: 'Paul Oakenfold',       url: '/wavs/audio/Starry Eyed Surprise - Paul Oakenfold.mp3' },
+    { title: 'The Freshmen',         artist: 'Verve Pipe',           url: '/wavs/audio/The Freshmen - Verve Pipe.mp3' },
+    { title: 'Time After Time',      artist: 'INOJ',                 url: '/wavs/audio/Time After Time - INOJ.mp3' },
   ];
 
   // ---------------------------------------------------------------------------
@@ -158,7 +168,8 @@
 
     if (!style.settings || !style.settings.length) return;
 
-    style.settings.forEach(function (setting) {
+    // Returns a self-contained DOM element for one setting (no outer row wrapper).
+    function buildControl(setting) {
       currentParams[setting.id] = setting.default;
 
       if (setting.type === 'range') {
@@ -192,12 +203,9 @@
         settingRow.appendChild(labelMin);
         settingRow.appendChild(slider);
         settingRow.appendChild(labelMax);
-        settingsWrap.appendChild(settingRow);
+        return settingRow;
 
       } else if (setting.type === 'toggle') {
-        const settingRow = document.createElement('div');
-        settingRow.style.cssText = 'display:flex;gap:6px;align-items:center';
-
         const btn = document.createElement('button');
         btn.style.cssText = 'background:#111;color:#00cc00;border:1px solid #333;font-size:11px;padding:2px 6px;cursor:pointer';
         function updateToggleLabel() {
@@ -208,9 +216,7 @@
           currentParams[setting.id] = !currentParams[setting.id];
           updateToggleLabel();
         });
-
-        settingRow.appendChild(btn);
-        settingsWrap.appendChild(settingRow);
+        return btn;
 
       } else if (setting.type === 'select') {
         const settingRow = document.createElement('div');
@@ -235,7 +241,21 @@
 
         settingRow.appendChild(label);
         settingRow.appendChild(sel);
-        settingsWrap.appendChild(settingRow);
+        return settingRow;
+      }
+    }
+
+    style.settings.forEach(function (setting) {
+      if (setting.type === 'group') {
+        const groupRow = document.createElement('div');
+        const justify  = setting.justify || 'space-between';
+        groupRow.style.cssText = 'display:flex;gap:16px;align-items:center;justify-content:' + justify + ';width:100%';
+        setting.settings.forEach(function (child) {
+          groupRow.appendChild(buildControl(child));
+        });
+        settingsWrap.appendChild(groupRow);
+      } else {
+        settingsWrap.appendChild(buildControl(setting));
       }
     });
   }
@@ -288,9 +308,12 @@
     rafId = requestAnimationFrame(draw);
     const buf = new Uint8Array(analyser.frequencyBinCount);
     analyser.getByteFrequencyData(buf);
+    const timeBuf = new Uint8Array(analyser.fftSize);
+    analyser.getByteTimeDomainData(timeBuf);
     // Delegate all drawing to the active style. The engine passes currentParams
     // so the style can read whatever settings it declared.
-    STYLES[currentStyle].render(ctx, W, H, buf, styleResources[currentStyle], currentParams);
+    // timeBuf (7th arg) is optional — frequency-only styles ignore it.
+    STYLES[currentStyle].render(ctx, W, H, buf, styleResources[currentStyle], currentParams, timeBuf);
   }
 
   function stopDraw() {
