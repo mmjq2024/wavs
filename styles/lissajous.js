@@ -9,10 +9,14 @@
 (function () {
 
   const THEMES = {
-    'Spectrum': ['#ff2222', '#ff8800', '#ffee00', '#00ee44', '#4499ff'],
-    'Neon':     ['#ff00cc', '#ff6600', '#ffee00', '#00eeff', '#aa44ff'],
-    'Fire':     ['#ff0000', '#ff4400', '#ff8800', '#ffcc00', '#ffffff'],
-    'Ice':      ['#0033ff', '#0088ff', '#00ccff', '#aaeeff', '#ffffff'],
+    'Hot Neon':   ['#ff00cc', '#ff6600', '#ffee00', '#00eeff', '#deccff'],
+    'Crayola':    ['#ff2222', '#ff8800', '#ffee00', '#00ee44', '#4499ff'],
+    'Fire':       ['#ff0000', '#ff4400', '#ff8800', '#ffcc00', '#ffffff'],
+    'Ice':        ['#2081c3', '#63d2ff', '#78d5d7', '#bed8d4', '#f7f9f9'],
+    'Miami':      ['#ffdfa9', '#ff8e72', '#ed6a5e', '#4ce0b3', '#ffffff'],
+    '80s Neon':   ['#bfae48', '#d81e5b', '#23395b', '#12eaea', '#bce7fd'],
+    'Bauhaus':    ['#999999', '#2986cc', '#ffd966', '#f44336', '#eeeeee'],
+    'Sunny Day':  ['#ffffff', '#1e96fc', '#a2d6f9', '#fcf300', '#ffc600'],
   };
 
   // a:b harmonic ratios, one per band (sub-bass → highs).
@@ -87,14 +91,14 @@
         id: 'size',
         type: 'range',
         label: 'Size',
-        min: 0.7, max: 3.0, step: 0.1, default: 1.5,
+        min: 1.0, max: 3.0, step: 0.1, default: 2.4,
         labelMin: 'small',
         labelMax: 'large',
       },
       {
         type: 'group',
         settings: [
-          { id: 'theme', type: 'select', label: 'Theme', options: Object.keys(THEMES), default: 'Spectrum' },
+          { id: 'theme', type: 'select', label: 'Theme', options: Object.keys(THEMES), default: 'Hot Neon' },
           { id: 'trail', type: 'toggle', label: 'Trail', default: true },
           { id: 'glow',  type: 'toggle', label: 'Glow',  default: true },
         ],
@@ -103,7 +107,7 @@
         id: 'lineWidth',
         type: 'range',
         label: 'Thickness',
-        min: 0.25, max: 4, step: 0.25, default: 1.5,
+        min: 0.25, max: 4, step: 0.25, default: 1.0,
         labelMin: 'thin',
         labelMax: 'thick',
       },
