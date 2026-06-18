@@ -232,6 +232,7 @@
           const o = document.createElement('option');
           o.value = opt;
           o.textContent = opt;
+          o.style.cssText = 'background:#111;color:#00cc00';
           if (opt === setting.default) o.selected = true;
           sel.appendChild(o);
         });
