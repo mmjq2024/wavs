@@ -40,6 +40,54 @@
   }
 
   // ---------------------------------------------------------------------------
+  // Backgrounds (Mountain / Night Mountain)
+  // ---------------------------------------------------------------------------
+
+  function skyGradientSetup(W, H) {
+    return {};
+  }
+
+  function skyGradientDraw(ctx, W, H, bg) {
+    var grad = ctx.createLinearGradient(0, 0, 0, H);
+    grad.addColorStop(0,   '#edfaf4'); // near-white with green tint at top
+    grad.addColorStop(0.4, '#3399aa'); // turquoise mid
+    grad.addColorStop(1,   '#0d1e22'); // dark teal at base
+    ctx.fillStyle = grad;
+    ctx.fillRect(0, 0, W, H);
+  }
+
+  function starfieldSetup(W, H) {
+    var stars = [];
+    for (var i = 0; i < 180; i++) {
+      stars.push({
+        x:     Math.random() * W,
+        y:     Math.random() * H,
+        r:     0.4 + Math.random() * 1.1,
+        base:  0.25 + Math.random() * 0.75,
+        phase: Math.random() * Math.PI * 2,
+        speed: 0.015 + Math.random() * 0.035,
+      });
+    }
+    return { stars: stars, t: 0 };
+  }
+
+  function starfieldDraw(ctx, W, H, bg) {
+    ctx.fillStyle = '#000';
+    ctx.fillRect(0, 0, W, H);
+    bg.t++;
+    for (var i = 0; i < bg.stars.length; i++) {
+      var s = bg.stars[i];
+      var alpha = s.base * (0.6 + 0.4 * Math.sin(s.phase + bg.t * s.speed));
+      ctx.globalAlpha = alpha;
+      ctx.fillStyle = '#ffffff';
+      ctx.beginPath();
+      ctx.arc(s.x, s.y, s.r, 0, Math.PI * 2);
+      ctx.fill();
+    }
+    ctx.globalAlpha = 1;
+  }
+
+  // ---------------------------------------------------------------------------
   // Bar style factory
   // ---------------------------------------------------------------------------
 
@@ -47,7 +95,8 @@
   // logic; they differ only in bar geometry, gradient colours, peak options,
   // and growth direction (hangFromTop flips bars to hang from the ceiling
   // instead of rising from the floor — same gradient, mirrored anchor).
-  function createBarStyle(name, barWidth, barGap, showPeaks, stops, peakColor, hangFromTop, floatPeaks) {
+  // bgSetup(W,H) and bgDraw(ctx,W,H,bgState) are optional background callbacks.
+  function createBarStyle(name, barWidth, barGap, showPeaks, stops, peakColor, hangFromTop, floatPeaks, bgSetup, bgDraw) {
 
     return {
       name: name,
@@ -90,6 +139,7 @@
           holdCounters: new Array(numBars).fill(0),
           peakAlphas:   floatPeaks ? new Float32Array(numBars) : null,
           peakVels:     floatPeaks ? new Float32Array(numBars) : null,
+          bgState:      bgSetup ? bgSetup(W, H) : null,
         };
       },
 
@@ -111,8 +161,12 @@
         const holdCounters = resources.holdCounters;
         const blend = params.gradientBlend;
 
-        ctx.fillStyle = '#000';
-        ctx.fillRect(0, 0, W, H);
+        if (bgDraw && resources.bgState) {
+          bgDraw(ctx, W, H, resources.bgState);
+        } else {
+          ctx.fillStyle = '#000';
+          ctx.fillRect(0, 0, W, H);
+        }
 
         for (let i = 0; i < numBars; i++) {
           const barH = Math.round((getBarLevel(bins, i, buf) / 255) * H);
@@ -178,6 +232,7 @@
         resources.holdCounters.fill(0);
         if (resources.peakAlphas) resources.peakAlphas.fill(0);
         if (resources.peakVels)   resources.peakVels.fill(0);
+        if (resources.bgState)    resources.bgState.t = 0;
       },
     };
   }
@@ -200,7 +255,12 @@
     createBarStyle(
       'Mountain', 2, 0, false,
       [[0, '#ffffff'], [0.2, '#ff88ff'], [0.45, '#4488ff'], [0.7, '#00ffcc'], [1, '#006644']],
-      null
+      null, false, false, skyGradientSetup, skyGradientDraw
+    ),
+    createBarStyle(
+      'Night Mountain', 2, 0, false,
+      [[0, '#aabbdd'], [0.2, '#662288'], [0.45, '#2255aa'], [0.7, '#009977'], [1, '#003322']],
+      null, false, false, starfieldSetup, starfieldDraw
     ),
     createBarStyle(
       'Flame', 3, 0, true,

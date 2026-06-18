@@ -53,9 +53,11 @@
 
     setup: function (ctx, W, H) {
       return {
-        numBars: NUM_BARS,
-        bins: null,       // populated by initBins() after AudioContext is ready
-        history: [],      // Float32Array per frame, most recent at index 0
+        numBars:     NUM_BARS,
+        bins:        null,
+        history:     [],
+        glowEnergy:  0,
+        glints:      [],
       };
     },
 
@@ -82,11 +84,30 @@
         const raw = getBarLevel(resources.bins, i, buf) / 255;
         levels[i] = Math.max(0, (raw - FLOOR) / (1 - FLOOR));
       }
+      // Track smoothed energy for depth glow: fast rise, slow decay.
+      let energySum = 0;
+      for (let i = 0; i < numBars; i++) energySum += levels[i];
+      const rawEnergy = energySum / numBars;
+      resources.glowEnergy = rawEnergy > resources.glowEnergy
+        ? resources.glowEnergy * 0.6 + rawEnergy * 0.4
+        : resources.glowEnergy * 0.97 + rawEnergy * 0.03;
+      const glow = resources.glowEnergy;
+
       history.unshift(levels);
       if (history.length > HISTORY) history.pop();
 
       // Very dark navy background — sets the deep-water atmosphere.
       ctx.fillStyle = '#000c18';
+      ctx.fillRect(0, 0, W, H);
+
+      // Depth glow: a bioluminescent bloom rising from deep below.
+      const glowRadius = W * 0.55 + glow * W * 0.45;
+      const glowAlpha  = 0.18 + glow * 0.50;
+      const radGrad = ctx.createRadialGradient(W / 2, H, 0, W / 2, H, glowRadius);
+      radGrad.addColorStop(0,   'rgba(0,180,255,' + glowAlpha.toFixed(2) + ')');
+      radGrad.addColorStop(0.4, 'rgba(0,90,180,'  + (glowAlpha * 0.5).toFixed(2) + ')');
+      radGrad.addColorStop(1,   'rgba(0,0,0,0)');
+      ctx.fillStyle = radGrad;
       ctx.fillRect(0, 0, W, H);
 
       // Draw from the oldest frame to the newest (painter's algorithm) so
@@ -119,26 +140,72 @@
         const fillGrad = ctx.createLinearGradient(0, bottomY, 0, peakY);
         fillGrad.addColorStop(0,    'rgba(0,0,0,0)');
         fillGrad.addColorStop(0.62, 'rgba(0,0,0,0)');
-        fillGrad.addColorStop(0.84, 'rgba(0,'  + Math.round(60  * dim) + ',' + Math.round(160 * dim) + ',' + (0.12 * dim).toFixed(2) + ')');
-        fillGrad.addColorStop(1,    'rgba('    + Math.round(30  * dim) + ',' + Math.round(140 * dim) + ',255,' + (0.30 * dim).toFixed(2) + ')');
+        fillGrad.addColorStop(0.84, 'rgba(0,'  + Math.round(90  * dim) + ',' + Math.round(200 * dim) + ',' + (0.22 * dim).toFixed(2) + ')');
+        fillGrad.addColorStop(1,    'rgba('    + Math.round(60  * dim) + ',' + Math.round(180 * dim) + ',255,' + (0.50 * dim).toFixed(2) + ')');
         ctx.fillStyle = fillGrad;
         ctx.fill();
 
         // Stroke: vertical gradient from dark navy at the base to bright sky-blue
         // at the crest. Tall (loud) peaks are the most vivid; quiet areas stay deep.
         const strokeGrad = ctx.createLinearGradient(0, bottomY, 0, peakY);
-        strokeGrad.addColorStop(0,   'rgba(0,'  + Math.round(25  * dim) + ',' + Math.round(90  * dim) + ',' + (0.25 * dim).toFixed(2) + ')');
-        strokeGrad.addColorStop(0.5, 'rgba(0,'  + Math.round(120 * dim) + ',' + Math.round(220 * dim) + ',' + (0.60 * dim).toFixed(2) + ')');
-        strokeGrad.addColorStop(1,   'rgba('    + Math.round(100 * dim) + ',' + Math.round(210 * dim) + ',255,' + dim.toFixed(2) + ')');
+        strokeGrad.addColorStop(0,   'rgba(0,'  + Math.round(40  * dim) + ',' + Math.round(130 * dim) + ',' + (0.40 * dim).toFixed(2) + ')');
+        strokeGrad.addColorStop(0.5, 'rgba(0,'  + Math.round(160 * dim) + ',' + Math.round(240 * dim) + ',' + (0.85 * dim).toFixed(2) + ')');
+        strokeGrad.addColorStop(1,   'rgba('    + Math.round(140 * dim) + ',' + Math.round(230 * dim) + ',255,' + Math.min(1, dim * 1.3).toFixed(2) + ')');
         ctx.strokeStyle = strokeGrad;
         // Current frame gets a slightly heavier line so it reads clearly as the front.
         ctx.lineWidth = d === 0 ? 1.5 : 0.8;
         ctx.stroke();
       }
+
+      // Horizon mist: a veil of dark fog that thickens toward the back,
+      // dissolving the oldest frames into haze.
+      const mistGrad = ctx.createLinearGradient(0, 0, 0, H * 0.55);
+      mistGrad.addColorStop(0,   'rgba(0,8,20,0.82)');
+      mistGrad.addColorStop(0.5, 'rgba(0,8,20,0.35)');
+      mistGrad.addColorStop(1,   'rgba(0,0,0,0)');
+      ctx.fillStyle = mistGrad;
+      ctx.fillRect(0, 0, W, H * 0.55);
+
+      // Surface glints: bright motes spawned at the front wave's crests,
+      // drifting sideways and upward like moonlight catching on ripples.
+      const glints = resources.glints;
+      const stepW  = W / numBars;
+      if (history.length > 0) {
+        const front = history[0];
+        for (let i = 0; i < numBars; i++) {
+          if (front[i] > 0.22 && Math.random() < 0.04) {
+            glints.push({
+              x:  Math.random() * W,
+              y:  Math.random() * H * 0.82,
+              vx: (Math.random() - 0.5) * 0.7,
+              vy: -0.6 - Math.random() * 0.9,
+              alpha: 0.7 + Math.random() * 0.3,
+              r:  0.6 + Math.random() * 1.0,
+            });
+          }
+        }
+        if (glints.length > 200) glints.splice(0, glints.length - 200);
+      }
+
+      for (let gi = glints.length - 1; gi >= 0; gi--) {
+        const g = glints[gi];
+        g.x     += g.vx;
+        g.y     += g.vy;
+        g.alpha -= 0.018;
+        if (g.alpha <= 0) { glints.splice(gi, 1); continue; }
+        ctx.globalAlpha = g.alpha;
+        ctx.fillStyle   = '#cceeff';
+        ctx.beginPath();
+        ctx.arc(g.x, g.y, g.r, 0, Math.PI * 2);
+        ctx.fill();
+      }
+      ctx.globalAlpha = 1;
     },
 
     reset: function (resources) {
-      resources.history = [];
+      resources.history    = [];
+      resources.glowEnergy = 0;
+      resources.glints     = [];
     },
   });
 
