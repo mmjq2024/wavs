@@ -148,8 +148,12 @@
         // Mirror mode: both halves show the same spectrum symmetrically,
         // bass at the outer edges meeting treble at the centre.
         const freqIdx = mirror ? Math.min(i, numBars - 1 - i) : i;
-        const rawAmp  = getBarLevel(bins, freqIdx, buf) / 255;
-        const barLen  = rawAmp * maxBarH;
+        // Visual EQ: t=0 (bass) gets 0.5× gain, t=1 (treble) gets 3×,
+        // so the spectrum looks balanced despite music's natural bass dominance.
+        const t      = freqIdx / numBars;
+        const eq     = 0.5 + 2.5 * Math.pow(t, 1.2);
+        const rawAmp = Math.min(1, getBarLevel(bins, freqIdx, buf) / 255 * eq);
+        const barLen = rawAmp * maxBarH;
 
         // Launch when: no particle is active, OR bar rises well above the last
         // launch height. launchLens tracks the fixed launch position (not the

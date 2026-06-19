@@ -16,7 +16,7 @@
 
   // Canvas dimensions. Style files auto-fit their bar/element count to W.
   const W = 700;
-  const H = 200;
+  const H = 300;
 
   // ---------------------------------------------------------------------------
   // Song list

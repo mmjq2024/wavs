@@ -94,7 +94,11 @@
       }
 
       for (let c = 0; c < numCols; c++) {
-        const amp = bins ? getBarLevel(bins, c, buf) / 255 : 0;
+        // Visual EQ: c=0 (bass) gets 0.5× gain, c=numCols (treble) gets 3×,
+        // so the spectrum looks balanced despite music's natural bass dominance.
+        const rawAmp = bins ? getBarLevel(bins, c, buf) / 255 : 0;
+        const eq     = 0.5 + 2.5 * Math.pow(c / numCols, 1.2);
+        const amp    = Math.min(1, rawAmp * eq);
 
         // Loud = head near top (row 0); quiet = head near bottom.
         const targetRow = Math.floor((1 - amp) * numRows);

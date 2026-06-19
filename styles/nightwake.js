@@ -14,7 +14,7 @@
   const MIN_FREQ = 20;
   const MAX_FREQ = 20000;
   const NUM_BARS = 128; // frequency resolution; halve for performance, double for detail
-  const HISTORY  = 50;  // frames retained for the waterfall depth
+  const HISTORY  = 80;  // frames retained for the waterfall depth
 
   // ---------------------------------------------------------------------------
   // Shared helpers (same log-scale bin mapping used by bars.js)
@@ -80,9 +80,20 @@
       // This keeps quiet passages flat without amplifying loud ones into clipping.
       const FLOOR = 0.08;
       const levels = new Float32Array(numBars);
+      // For each frequency bar: read raw FFT level, apply a noise floor to
+      // silence near-zero signals, then apply a visual EQ gain curve so that
+      // high-frequency bars (which carry less natural energy) appear as active
+      // as bass bars. The curve runs 0.5× at i=0 (bass) to 3× at i=numBars (treble).
+      // For each frequency bar: read raw FFT level, apply a visual EQ gain curve so that
+      // high-frequency bars (which carry less natural energy) appear as active
+      // as bass bars. The curve runs 0.5× at i=0 (bass) to 3× at i=numBars (treble).
+      // EQ is applied before the noise floor so the boost can lift quiet high-frequency
+      // signals above the threshold rather than having the floor zero them out first.
       for (let i = 0; i < numBars; i++) {
-        const raw = getBarLevel(resources.bins, i, buf) / 255;
-        levels[i] = Math.max(0, (raw - FLOOR) / (1 - FLOOR));
+        const raw    = getBarLevel(resources.bins, i, buf) / 255;
+        const eq     = 0.5 + 2.5 * Math.pow(i / numBars, 1.2);
+        const boosted = raw * eq;
+        levels[i] = Math.min(1, Math.max(0, (boosted - FLOOR) / (1 - FLOOR)));
       }
       // Track smoothed energy for depth glow: fast rise, slow decay.
       let energySum = 0;

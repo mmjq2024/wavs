@@ -49,42 +49,11 @@
 
   function skyGradientDraw(ctx, W, H, bg) {
     var grad = ctx.createLinearGradient(0, 0, 0, H);
-    grad.addColorStop(0,   '#edfaf4'); // near-white with green tint at top
-    grad.addColorStop(0.4, '#3399aa'); // turquoise mid
-    grad.addColorStop(1,   '#0d1e22'); // dark teal at base
+    grad.addColorStop(0,   '#e8eef0'); // pale blue-gray at top
+    grad.addColorStop(0.4, '#5a7a80'); // muted teal-gray mid
+    grad.addColorStop(1,   '#141b1d'); // near-black with slight teal at base
     ctx.fillStyle = grad;
     ctx.fillRect(0, 0, W, H);
-  }
-
-  function starfieldSetup(W, H) {
-    var stars = [];
-    for (var i = 0; i < 180; i++) {
-      stars.push({
-        x:     Math.random() * W,
-        y:     Math.random() * H,
-        r:     0.4 + Math.random() * 1.1,
-        base:  0.25 + Math.random() * 0.75,
-        phase: Math.random() * Math.PI * 2,
-        speed: 0.015 + Math.random() * 0.035,
-      });
-    }
-    return { stars: stars, t: 0 };
-  }
-
-  function starfieldDraw(ctx, W, H, bg) {
-    ctx.fillStyle = '#000';
-    ctx.fillRect(0, 0, W, H);
-    bg.t++;
-    for (var i = 0; i < bg.stars.length; i++) {
-      var s = bg.stars[i];
-      var alpha = s.base * (0.6 + 0.4 * Math.sin(s.phase + bg.t * s.speed));
-      ctx.globalAlpha = alpha;
-      ctx.fillStyle = '#ffffff';
-      ctx.beginPath();
-      ctx.arc(s.x, s.y, s.r, 0, Math.PI * 2);
-      ctx.fill();
-    }
-    ctx.globalAlpha = 1;
   }
 
   // ---------------------------------------------------------------------------
@@ -169,7 +138,12 @@
         }
 
         for (let i = 0; i < numBars; i++) {
-          const barH = Math.round((getBarLevel(bins, i, buf) / 255) * H);
+          // Visual EQ: high frequencies have naturally less energy in music, so
+          // we apply a position-dependent gain. t=0 (bass) gets 0.5× to reduce
+          // dominance; t=1 (treble) gets 3× to lift quiet high-end activity.
+          const t    = i / numBars;
+          const eq   = 0.5 + 2.5 * Math.pow(t, 1.2);
+          const barH = Math.round(Math.min(1, getBarLevel(bins, i, buf) / 255 * eq) * H);
           const x = i * (barWidth + barGap);
 
           const y = hangFromTop ? 0 : H - barH;
@@ -254,13 +228,13 @@
     ),
     createBarStyle(
       'Mountain', 2, 0, false,
-      [[0, '#ffffff'], [0.2, '#ff88ff'], [0.45, '#4488ff'], [0.7, '#00ffcc'], [1, '#006644']],
+      [[0, '#c0cccc'], [0.2, '#8899aa'], [0.45, '#507070'], [0.7, '#2e5050'], [1, '#1a3030']],
       null, false, false, skyGradientSetup, skyGradientDraw
     ),
     createBarStyle(
-      'Night Mountain', 2, 0, false,
-      [[0, '#aabbdd'], [0.2, '#662288'], [0.45, '#2255aa'], [0.7, '#009977'], [1, '#003322']],
-      null, false, false, starfieldSetup, starfieldDraw
+      'Twilight', 2, 0, false,
+      [[0, '#ddeef8'], [0.2, '#cc66cc'], [0.45, '#3366bb'], [0.7, '#00bb99'], [1, '#004d33']],
+      null, false, false, skyGradientSetup, skyGradientDraw
     ),
     createBarStyle(
       'Flame', 3, 0, true,
