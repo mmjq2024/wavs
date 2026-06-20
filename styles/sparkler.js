@@ -151,7 +151,7 @@
         // Visual EQ: t=0 (bass) gets 0.5× gain, t=1 (treble) gets 3×,
         // so the spectrum looks balanced despite music's natural bass dominance.
         const t      = freqIdx / numBars;
-        const eq     = 0.5 + 2.5 * Math.pow(t, 1.2);
+        const eq     = 0.4 + 2.0 * Math.pow(t, 1.2);
         const rawAmp = Math.min(1, getBarLevel(bins, freqIdx, buf) / 255 * eq);
         const barLen = rawAmp * maxBarH;
 

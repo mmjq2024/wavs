@@ -91,7 +91,7 @@
       // signals above the threshold rather than having the floor zero them out first.
       for (let i = 0; i < numBars; i++) {
         const raw    = getBarLevel(resources.bins, i, buf) / 255;
-        const eq     = 0.5 + 2.5 * Math.pow(i / numBars, 1.2);
+        const eq     = 0.4 + 2.0 * Math.pow(i / numBars, 1.2);
         const boosted = raw * eq;
         levels[i] = Math.min(1, Math.max(0, (boosted - FLOOR) / (1 - FLOOR)));
       }
@@ -112,8 +112,8 @@
       ctx.fillRect(0, 0, W, H);
 
       // Depth glow: a bioluminescent bloom rising from deep below.
-      const glowRadius = W * 0.55 + glow * W * 0.45;
-      const glowAlpha  = 0.18 + glow * 0.50;
+      const glowRadius = W * 0.40 + glow * W * 0.20;
+      const glowAlpha  = 0.15 + glow * 0.38;
       const radGrad = ctx.createRadialGradient(W / 2, H, 0, W / 2, H, glowRadius);
       radGrad.addColorStop(0,   'rgba(0,180,255,' + glowAlpha.toFixed(2) + ')');
       radGrad.addColorStop(0.4, 'rgba(0,90,180,'  + (glowAlpha * 0.5).toFixed(2) + ')');
@@ -185,13 +185,14 @@
         const front = history[0];
         for (let i = 0; i < numBars; i++) {
           if (front[i] > 0.22 && Math.random() < 0.04) {
+            const crestY = H - front[i] * H;
             glints.push({
-              x:  Math.random() * W,
-              y:  Math.random() * H * 0.82,
-              vx: (Math.random() - 0.5) * 0.7,
-              vy: -0.6 - Math.random() * 0.9,
+              x:     Math.random() * W,
+              y:     Math.pow(Math.random(), 2) * H * 0.82,
+              vx:    (Math.random() - 0.5) * 0.7,
+              vy:    -0.6 - Math.random() * 0.9,
               alpha: 0.7 + Math.random() * 0.3,
-              r:  0.6 + Math.random() * 1.0,
+              r:     0.6 + Math.random() * 1.0,
             });
           }
         }

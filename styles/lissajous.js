@@ -91,9 +91,17 @@
         id: 'size',
         type: 'range',
         label: 'Size',
-        min: 1.0, max: 3.0, step: 0.1, default: 2.4,
+        min: 1.0, max: 3.0, step: 0.1, default: 2.0,
         labelMin: 'small',
         labelMax: 'large',
+      },
+      {
+        id: 'energy',
+        type: 'range',
+        label: 'Energy',
+        min: 0.1, max: 2.0, step: 0.1, default: 0.6,
+        labelMin: 'calm',
+        labelMax: 'wild',
       },
       {
         type: 'group',
@@ -102,14 +110,6 @@
           { id: 'trail', type: 'toggle', label: 'Trail', default: true },
           { id: 'glow',  type: 'toggle', label: 'Glow',  default: true },
         ],
-      },
-      {
-        id: 'lineWidth',
-        type: 'range',
-        label: 'Thickness',
-        min: 0.25, max: 4, step: 0.25, default: 1.0,
-        labelMin: 'thin',
-        labelMax: 'thick',
       },
     ],
 
@@ -132,7 +132,7 @@
     },
 
     render: function (ctx, W, H, buf, resources, params, timeBuf) {
-      const lw     = params.lineWidth;
+      const lw     = 1.0;
       const colors = THEMES[params.theme] || THEMES['Spectrum'];
       const tc     = resources.tc;
 
@@ -143,7 +143,7 @@
       }
       let energy = 0;
       for (let b = 0; b < 5; b++) energy += resources.amps[b];
-      resources.phase += (energy / 5) * 0.15;
+      resources.phase += (energy / 5) * 0.15 * params.energy;
 
       const cx        = W / 2;
       const cy        = H / 2;

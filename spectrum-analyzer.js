@@ -95,10 +95,10 @@
   // ---------------------------------------------------------------------------
 
   const row = document.createElement('div');
-  row.style.cssText = 'display:flex;gap:8px;align-items:center;width:100%';
+  row.style.cssText = 'display:flex;gap:8px;align-items:center;width:100%;flex-wrap:wrap';
 
   const songSelect = document.createElement('select');
-  songSelect.style.cssText = 'flex:1;background:#111;color:#00cc00;border:1px solid #333;font-size:11px;padding:2px 4px;cursor:pointer';
+  songSelect.style.cssText = 'flex:1;background:#111;color:#00cc00;border:1px solid #333;font-size:14px;padding:6px 8px;cursor:pointer';
   const placeholderOpt = document.createElement('option');
   placeholderOpt.value = '';
   placeholderOpt.textContent = '— select a song —';
@@ -115,15 +115,15 @@
 
   const browseBtn = document.createElement('button');
   browseBtn.textContent = 'Browse';
-  browseBtn.style.cssText = 'background:#111;color:#00cc00;border:1px solid #333;font-size:11px;padding:2px 6px;cursor:pointer;white-space:nowrap';
+  browseBtn.style.cssText = 'background:#111;color:#00cc00;border:1px solid #333;font-size:14px;padding:6px 12px;cursor:pointer;white-space:nowrap';
 
   const picker = document.createElement('input');
   picker.type = 'file';
   picker.accept = 'audio/*';
-  picker.style.cssText = 'flex:1;color:#00cc00;font-size:11px;background:transparent;border:none;cursor:pointer;display:none';
+  picker.style.cssText = 'flex:1;color:#00cc00;font-size:14px;background:transparent;border:none;cursor:pointer;display:none';
 
   const styleSelect = document.createElement('select');
-  styleSelect.style.cssText = 'background:#111;color:#00cc00;border:1px solid #333;font-size:11px;padding:2px 4px;cursor:pointer';
+  styleSelect.style.cssText = 'background:#111;color:#00cc00;border:1px solid #333;font-size:14px;padding:6px 8px;cursor:pointer';
   STYLES.forEach(function (style, i) {
     const opt = document.createElement('option');
     opt.value = i;
@@ -151,7 +151,7 @@
   // settings array; the engine renders the appropriate controls from it.
 
   const settingsWrap = document.createElement('div');
-  settingsWrap.style.cssText = 'display:flex;flex-direction:column;gap:4px;width:100%';
+  settingsWrap.style.cssText = 'display:flex;flex-direction:column;gap:12px;width:100%';
   wrap.appendChild(settingsWrap);
 
   document.body.appendChild(wrap);
@@ -178,11 +178,11 @@
 
         const label = document.createElement('span');
         label.textContent = setting.label + ':';
-        label.style.cssText = 'color:#00cc00;font-size:10px;white-space:nowrap;font-family:monospace';
+        label.style.cssText = 'color:#00cc00;font-size:13px;white-space:nowrap;font-family:monospace';
 
         const labelMin = document.createElement('span');
         labelMin.textContent = setting.labelMin || '';
-        labelMin.style.cssText = 'color:#555;font-size:10px;font-family:monospace;white-space:nowrap';
+        labelMin.style.cssText = 'color:#555;font-size:12px;font-family:monospace;white-space:nowrap';
 
         const slider = document.createElement('input');
         slider.type = 'range';
@@ -197,7 +197,7 @@
 
         const labelMax = document.createElement('span');
         labelMax.textContent = setting.labelMax || '';
-        labelMax.style.cssText = 'color:#555;font-size:10px;font-family:monospace;white-space:nowrap';
+        labelMax.style.cssText = 'color:#555;font-size:12px;font-family:monospace;white-space:nowrap';
 
         settingRow.appendChild(label);
         settingRow.appendChild(labelMin);
@@ -207,7 +207,7 @@
 
       } else if (setting.type === 'toggle') {
         const btn = document.createElement('button');
-        btn.style.cssText = 'background:#111;color:#00cc00;border:1px solid #333;font-size:11px;padding:2px 6px;cursor:pointer';
+        btn.style.cssText = 'background:#111;color:#00cc00;border:1px solid #333;font-size:14px;padding:6px 12px;cursor:pointer';
         function updateToggleLabel() {
           btn.textContent = setting.label + ': ' + (currentParams[setting.id] ? 'On' : 'Off');
         }
@@ -224,10 +224,10 @@
 
         const label = document.createElement('span');
         label.textContent = setting.label + ':';
-        label.style.cssText = 'color:#00cc00;font-size:10px;white-space:nowrap;font-family:monospace';
+        label.style.cssText = 'color:#00cc00;font-size:13px;white-space:nowrap;font-family:monospace';
 
         const sel = document.createElement('select');
-        sel.style.cssText = 'background:#111;color:#00cc00;border:1px solid #333;font-size:11px;padding:2px 4px;cursor:pointer';
+        sel.style.cssText = 'background:#111;color:#00cc00;border:1px solid #333;font-size:14px;padding:6px 8px;cursor:pointer';
         setting.options.forEach(function (opt) {
           const o = document.createElement('option');
           o.value = opt;
@@ -291,7 +291,7 @@
     audioCtx = new (window.AudioContext || window.webkitAudioContext)();
     analyser = audioCtx.createAnalyser();
     analyser.fftSize = 32768; // max size — gives 16384 bins for fine low-freq resolution
-    analyser.smoothingTimeConstant = 0.8;
+    analyser.smoothingTimeConstant = 0.65;
     source = audioCtx.createMediaElementSource(audio);
     source.connect(analyser);
     analyser.connect(audioCtx.destination);
