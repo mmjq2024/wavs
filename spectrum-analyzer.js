@@ -280,21 +280,29 @@
   // Audio setup
   // ---------------------------------------------------------------------------
 
-  let audioCtx, analyser, source;
+  let audioCtx, analyser, source, delayNode;
   let rafId = null;
+
+  // How many seconds the audio is delayed relative to the analyser.
+  // The analyser sees audio AUDIO_DELAY_S seconds before the speakers play it,
+  // so the visualization leads the sound rather than lagging behind it.
+  const AUDIO_DELAY_S = 0.20;
 
   // Deferred until first user interaction so the AudioContext is created from
   // a user gesture, satisfying browser autoplay policy.
-  // Graph: <audio> → MediaElementSourceNode → AnalyserNode → speakers.
+  // Graph: <audio> → MediaElementSourceNode → AnalyserNode → DelayNode → speakers.
   function init() {
     if (audioCtx) return;
     audioCtx = new (window.AudioContext || window.webkitAudioContext)();
     analyser = audioCtx.createAnalyser();
-    analyser.fftSize = 32768; // max size — gives 16384 bins for fine low-freq resolution
+    analyser.fftSize = 32768;
     analyser.smoothingTimeConstant = 0.65;
+    delayNode = audioCtx.createDelay(1.0);
+    delayNode.delayTime.value = AUDIO_DELAY_S;
     source = audioCtx.createMediaElementSource(audio);
     source.connect(analyser);
-    analyser.connect(audioCtx.destination);
+    analyser.connect(delayNode);
+    delayNode.connect(audioCtx.destination);
     // Give every style its bin mapping now that we know bufLen and sampleRate.
     STYLES.forEach(function (style, i) {
       style.initBins(styleResources[i], analyser.frequencyBinCount, audioCtx.sampleRate);
